@@ -1,6 +1,18 @@
-Inside the folder controllers, create a file AppController.js that contains the definition of the 2 endpoints:
+import redisClient from '../utils/redis';
+import dbClient from '../utils/db';
 
-GET /status should return if Redis is alive and if the DB is alive too by using the 2 utils created previously: { "redis": true, "db": true } with a status code 200
-GET /stats should return the number of users and files in DB: { "users": 12, "files": 1231 } with a status code 200
-users collection must be used for counting all users
-files collection must be used for counting all files
+const getStatus = (req, res) => {
+  if (redisClient.isAlive && dbClient.isAlive) {
+    res.status(200);
+    res.send('{ "redis": true, "db": true }');
+  }
+};
+
+const getStats = (req, res) => {
+  res.status(200);
+  const numf = dbClient.nbFiles;
+  const numu = dbClient.nbUsers;
+  res.send(`{users: ${numu}, files: ${numf}}`);
+};
+
+export default { getStats, getStatus };
