@@ -1,18 +1,17 @@
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
-const getStatus = (req, res) => {
-  if (redisClient.isAlive && dbClient.isAlive) {
-    res.status(200);
-    res.send('{ "redis": true, "db": true }');
+class AppController {
+  static getStatus(req, res) {
+    const redisalive = redisClient.isAlive();
+    const dbalive = dbClient.isAlive();
+    res.status(200).json({ redis: redisalive, db: dbalive });
   }
-};
 
-const getStats = (req, res) => {
-  res.status(200);
-  const numf = dbClient.nbFiles;
-  const numu = dbClient.nbUsers;
-  res.send(`{users: ${numu}, files: ${numf}}`);
-};
-
-export default { getStats, getStatus };
+  static async getStats(req, res) {
+    const numf = await dbClient.nbFiles();
+    const numu = await dbClient.nbUsers();
+    res.status(200).json({ users: numu, files: numf });
+  }
+}
+export default AppController;
