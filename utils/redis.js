@@ -5,6 +5,8 @@ class RedisClient {
     this.client = redis.createClient();
     this.client.on('error', (error) => {
       console.error(error);
+    }).on('connect', () => {
+      console.log('Redis client connected to the server');
     });
   }
 

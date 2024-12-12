@@ -11,6 +11,7 @@ class DBClient {
       if (err) {
         this.dbClient = false;
       } else {
+        console.log(`mongodb connected to ${url}`);
         this.dbClient = client.db(database);
       }
     });
