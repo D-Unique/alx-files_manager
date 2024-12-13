@@ -6,16 +6,17 @@ class UsersController {
     const { password } = req.body;
     const { email } = req.body;
     if (!email) {
-      res.status('400').send('Missing password');
+      res.status('400').json({ error: 'Missing email' });
     }
     if (!password) {
-      res.status('400').send('Missing email');
+      res.status('400').json({ error: 'Missing password' });
     }
     const eQuery = { email };
-    const dbUserC = dbClient.collection('users');
-    const eCursor = dbUserC.find(eQuery);
-    if (!eCursor) {
-      res.status(400).send('Already exist');
+    const dbUserC = dbClient.dbClient.collection('users');
+    const eCursor = await dbUserC.findOne(eQuery);
+    console.log(eCursor);
+    if (eCursor !== null) {
+      res.status(400).json({ error: 'Already exist' });
     }
     const hashPassword = cryto.createHash('SHA1')
       .update(password)
@@ -24,11 +25,8 @@ class UsersController {
       email,
       password: hashPassword,
     };
-    const obj = dbUserC.insert(newUser);
-    res.status(201).json({
-      email,
-      id: obj.id,
-    });
+    const obj = await dbUserC.insertOne(newUser);
+    res.status(201).json(`{id: ${obj.insertedId}, email: ${email}}`);
   }
 }
 
