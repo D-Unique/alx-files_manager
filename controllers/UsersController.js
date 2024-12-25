@@ -15,12 +15,8 @@ class UsersController {
       return res.status(400).json({ error: 'Already exist' });
     }
     const hashPassword = sha1(password);
-    const newUser = {
-      email,
-      password: hashPassword,
-    };
-    const obj = await dbclient.dbClient.collection('users').insertOne(newUser);
-    return res.status(201).json(`{id: ${obj.insertedId}, email: ${email}}`);
+    const obj = await dbclient.dbClient.collection('users').insertOne({ email, password: hashPassword });
+    return res.status(201).json({ id: obj.insertedId, email });
   }
 }
 
