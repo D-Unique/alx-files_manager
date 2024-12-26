@@ -56,6 +56,11 @@ class FilesController {
     });
     return res.status(201).json({ newFileobj });
   }
+    
+    
+    
+    static async getShow(req, res) { }
+    static async getIndex(req, res) { }
 }
 
 export default FilesController;
