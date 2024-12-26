@@ -9,7 +9,6 @@ class AuthController {
     const encodedCreden = auth.trim().replace('Basic ', '');
     const strCreden = Buffer.from(encodedCreden, 'base64').toString('utf-8');
     const [email, password] = strCreden.split(':');
-    console.log(email);
     if (!email || !password) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
