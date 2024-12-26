@@ -1,32 +1,39 @@
-/*class AuthController {
-    static async getConnect(req, res) {
-        { email } = req.body
-        req.Authorization
+import sha1 from 'sha1';
+import { v4 as uuidv4 } from 'uuid';
+import dbclient from '../utils/db';
+import redisClient from '../utils/redis';
+
+class AuthController {
+  static async getConnect(req, res) {
+    const auth = req.header('Authorization');
+    const encodedCreden = auth.trim().replace('Basic ', '');
+    const strCreden = Buffer.from(encodedCreden, 'base64').toString('utf-8');
+    const [email, password] = strCreden.split(':');
+    console.log(email);
+    if (!email || !password) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
+    const user = await dbclient.dbClient.collection('users').findOne({ email });
+    if (!user || user.password !== sha1(password)) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = uuidv4();
+    const key = `auth_${token}`;
+    const val = user._id.toString();
+    await redisClient.client.set(key, val, 'EX', 60 * 60 * 24);
+    return res.status(200).json({ token });
+  }
+
+  static async getDisconnect(req, res) {
+    const token = req.header('X-Token');
+    const value = await redisClient.get(`auth_${token}`);
+    if (!value) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    await redisClient.del(`auth_${token}`);
+    return res.status(204).end;
+  }
 }
-GET / connect should sign -in the user by generating a new authentication token:
 
-
-By using the header Authorization and the technique of the Basic auth (Base64 of the <email>:<password>), find the user associate to this email and with this password (reminder: we are storing the SHA1 of the password)
-If no user has been found, return an error Unauthorized with a status code 401
-Otherwise:
-Generate a random string (using uuidv4) as token
-Create a key: auth_<token>
-Use this key for storing in Redis (by using the redisClient create previously) the user ID for 24 hours
-Return this token: { "token": "155342df-2399-41da-9e8c-458b6ac52a0c" } with a status code 200
-Now, we have a way to identify a user, create a token (= avoid to store the password on any front-end) and use this token for 24h to access to the API!
-
-Every authenticated endpoints of our API will look at this token inside the header X-Token.
-
-GET /disconnect should sign-out the user based on the token:
-
-Retrieve the user based on the token:
-If not found, return an error Unauthorized with a status code 401
-Otherwise, delete the token in Redis and return nothing with a status code 204
-Inside the file controllers/UsersController.js add a new endpoint:
-
-GET /users/me should retrieve the user base on the token used:
-
-Retrieve the user based on the token:
-If not found, return an error Unauthorized with a status code 401
-Otherwise, return the user object (email and id only)*/
+export default AuthController;
