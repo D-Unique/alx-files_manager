@@ -83,6 +83,30 @@ class FilesController {
     const files = await cursor.toArray();
     return res.status(200).json(files);
   }
+
+  static async putPublish(req, res) {
+    const token = req.header('X-Token');
+    if (!token) return res.status(401).json({ errror: 'Unauthorized' });
+    const userStrId = await redisClient.get(`auth_${token}`);
+    if (!userStrId) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const filedoc = await dbclient.dbClient.collection('files').findOne({ _Id: ObjectId(id), userId: ObjectId(userStrId) });
+    if (!filedoc) return res.status(404).json({ error: 'Not found' });
+    filedoc.isPublic = true;
+    return res.status(200).json({ filedoc });
+  }
+
+  static async putUnpublish(req, res) {
+    const token = req.header('X-Token');
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const userStrId = await redisClient.get(`auth_${token}`);
+    if (!userStrId) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const filedoc = await dbclient.dbClient.collection('files').findOne({ _Id: ObjectId(id), userId: ObjectId(userStrId) });
+    if (!filedoc) return res.status(404).json({ error: 'Not found' });
+    filedoc.isPublic = false;
+    return res.status(200).json({ filedoc });
+  }
 }
 
 export default FilesController;
