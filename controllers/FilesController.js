@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb';
 import mime from 'mime-types';
 import path from 'path';
 import redisClient from '../utils/redis';
+import fileQueue from '../worker';
 import dbclient from '../utils/db';
 
 class FilesController {
@@ -19,7 +20,6 @@ class FilesController {
     if (!type || !['folder', 'file', 'image'].includes(type)) return res.status(400).json({ error: 'Missing type' });
     if (!data && type !== 'folder') return res.status(400).json({ error: 'Missing data' });
     let parentId = req.body.parentId || '0';
-
     if (parentId !== '0') {
       const fDoc = await dbclient.dbClient
         .collection('files')
@@ -56,6 +56,9 @@ class FilesController {
     const newFileobj = await dbclient.dbClient.collection('files').insertOne({
       localPath: filepath, ...folderData,
     });
+    if (type === 'image') {
+      fileQueue.add({ task: 'thumbnailprocess', data: { userId: ObjectId(userStrId), fileId: newFileobj.insertedId } });
+    }
     folderData.parentId = parentId === '0' ? 0 : ObjectId(parentId);
     return res.status(201).json({ id: newFileobj.insertedId, ...folderData });
   }
