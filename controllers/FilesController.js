@@ -122,7 +122,6 @@ class FilesController {
     if (!filedoc) return res.status(404).json({ error: 'Not found' });
     if (filedoc.type === 'folder') return res.status(400).json({ error: 'A folder doesn\'t have content' });
     const { localPath } = filedoc;
-    // if (size) localPath = `${localPath}_${size}`;
 
     if (!fs.existsSync(localPath)) return res.status(404).json({ error: 'Not found' });
 

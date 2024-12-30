@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import sha1 from 'sha1';
+import userQueue from '../worker';
 import dbclient from '../utils/db';
 import redisClient from '../utils/redis';
 
@@ -22,6 +23,7 @@ class UsersController {
     const obj = await dbclient.dbClient
       .collection('users')
       .insertOne({ email, password: hashPassword });
+    userQueue.add({ userId: obj.insertedId });
     return res.status(201).json({ id: obj.insertedId, email });
   }
 
